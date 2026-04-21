@@ -15,7 +15,7 @@
     border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; color: #666; }
   .tab-main.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
 
-  .tabs-iva { display: flex; gap: 0; margin-bottom: 1.2rem; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+  .tabs-iva { display: flex; margin-bottom: 1.2rem; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
   .tab-iva { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500;
     background: #fff; cursor: pointer; color: #666; border: none; }
   .tab-iva:first-child { border-right: 1px solid #ddd; }
@@ -30,18 +30,28 @@
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 
-  .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
-  .card-header { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
-  .card-body { padding: 4px 14px 10px; }
+  /* ACORDEÓN */
+  .acc { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+  .acc-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .acc-left { display: flex; flex-direction: column; gap: 2px; }
+  .acc-name { font-size: 14px; font-weight: 500; }
+  .acc-note { font-size: 11px; opacity: 0.75; }
+  .acc-right { display: flex; align-items: center; gap: 10px; }
+  .acc-precio { font-size: 20px; font-weight: 700; }
+  .acc-arrow { font-size: 12px; opacity: 0.5; transition: transform 0.2s; }
+  .acc.open .acc-arrow { transform: rotate(180deg); }
+
+  .acc-body { display: none; border-top: 1px solid #f0f0f0; padding: 4px 14px 10px; }
+  .acc.open .acc-body { display: block; }
+
   .row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
   .row:last-child { border-bottom: none; }
-  .row.total { font-weight: 600; font-size: 15px; padding-top: 8px; }
+  .row.total { font-weight: 600; font-size: 14px; padding-top: 8px; }
   .lbl { color: #888; font-size: 12px; }
-  .big { font-size: 21px; font-weight: 700; }
   .green { color: #3B6D11; }
   .red { color: #A32D2D; }
-  .note { font-size: 11px; margin-top: 2px; opacity: 0.8; }
 
+  /* CONFIG */
   .plan-row { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
   .plan-row-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
@@ -54,7 +64,7 @@
   .btn-save:active { opacity: 0.8; }
   .saved-msg { text-align: center; font-size: 13px; color: #3B6D11; margin-top: 8px; display: none; }
   .info-banner { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #666; margin-bottom: 14px; }
-  .info-banner strong { color: #1a1a1a; }
+
   footer { text-align: center; font-size: 11px; color: #aaa; margin-top: 1.5rem; }
 </style>
 </head>
@@ -74,7 +84,6 @@
     </div>
 
     <div class="section active" id="tab-coniva">
-      <div class="info-banner">Efectivo = neto puro. Transferencia = IVA + IIBB. Resto = IVA + IIBB + banco.</div>
       <div class="grid3">
         <div><label>Neto que querés ($)</label><input type="number" id="neto_con" value="19219" step="100" oninput="calcCon()"></div>
         <div><label>IVA efectivo (%)</label><input type="number" id="iva_con" value="11" min="0" max="21" step="0.5" oninput="calcCon()"></div>
@@ -84,7 +93,6 @@
     </div>
 
     <div class="section" id="tab-siniva">
-      <div class="info-banner">Efectivo = neto puro. Transferencia = solo IIBB. Resto = IIBB + banco. Sin IVA.</div>
       <div class="grid2">
         <div><label>Neto que querés ($)</label><input type="number" id="neto_sin" value="19219" step="100" oninput="calcSin()"></div>
         <div><label>IIBB (%)</label><input type="number" id="iibb_sin" value="1.5" min="0" max="10" step="0.5" oninput="calcSin()"></div>
@@ -104,15 +112,15 @@
 
 <script>
 const DEFAULT_PLANES = [
-  { id:'ef',     name:'Efectivo',                      note:'Sin descuentos',           costo:0,     color:'#2D6A2D', text:'#f0fae8', cuotas:1,  tipo:'efectivo'      },
-  { id:'transf', name:'Transferencia bancaria',        note:'IVA + IIBB',               costo:0,     color:'#3B6D11', text:'#f0fae8', cuotas:1,  tipo:'transferencia' },
-  { id:'qr',     name:'QR Nave',                       note:'',                         costo:2.47,  color:'#C47A1E', text:'#FFF4E0', cuotas:1,  tipo:'banco'         },
-  { id:'deb',    name:'Débito Nave',                   note:'',                         costo:1.45,  color:'#534AB7', text:'#EEEDFE', cuotas:1,  tipo:'banco'         },
-  { id:'cred1',  name:'Crédito 1 pago — Nave',         note:'',                         costo:5.44,  color:'#7B3FA0', text:'#F5EAFF', cuotas:1,  tipo:'banco'         },
-  { id:'c3gal',  name:'3 cuotas s/i — Galicia',        note:'Miércoles y viernes',      costo:3.62,  color:'#0F6E56', text:'#E1F5EE', cuotas:3,  tipo:'banco'         },
-  { id:'c3',     name:'3 cuotas sin interés',          note:'Todos los días',           costo:7.23,  color:'#185FA5', text:'#e6f1fb', cuotas:3,  tipo:'banco'         },
-  { id:'c6',     name:'6 cuotas sin interés',          note:'Todos los días',           costo:13.57, color:'#E24B4A', text:'#fff0f0', cuotas:6,  tipo:'banco'         },
-  { id:'c12',    name:'12 cuotas sin interés',         note:'Todos los días',           costo:32.63, color:'#444441', text:'#f1efe8', cuotas:12, tipo:'banco'         },
+  { id:'ef',     name:'Efectivo',                   note:'Sin descuentos',        costo:0,     color:'#2D6A2D', text:'#fff', cuotas:1,  tipo:'efectivo'      },
+  { id:'transf', name:'Transferencia bancaria',     note:'',                      costo:0,     color:'#3B6D11', text:'#fff', cuotas:1,  tipo:'transferencia' },
+  { id:'qr',     name:'QR Nave',                    note:'',                      costo:2.47,  color:'#C47A1E', text:'#fff', cuotas:1,  tipo:'banco'         },
+  { id:'deb',    name:'Débito Nave',                note:'',                      costo:1.45,  color:'#534AB7', text:'#fff', cuotas:1,  tipo:'banco'         },
+  { id:'cred1',  name:'Crédito 1 pago — Nave',      note:'',                      costo:5.44,  color:'#7B3FA0', text:'#fff', cuotas:1,  tipo:'banco'         },
+  { id:'c3gal',  name:'3 cuotas s/i — Galicia',     note:'Miércoles y viernes',   costo:3.62,  color:'#0F6E56', text:'#fff', cuotas:3,  tipo:'banco'         },
+  { id:'c3',     name:'3 cuotas sin interés',       note:'Todos los días',        costo:7.23,  color:'#185FA5', text:'#fff', cuotas:3,  tipo:'banco'         },
+  { id:'c6',     name:'6 cuotas sin interés',       note:'Todos los días',        costo:13.57, color:'#E24B4A', text:'#fff', cuotas:6,  tipo:'banco'         },
+  { id:'c12',    name:'12 cuotas sin interés',      note:'Todos los días',        costo:32.63, color:'#444441', text:'#fff', cuotas:12, tipo:'banco'         },
 ];
 
 function loadPlanes() {
@@ -128,75 +136,73 @@ const fmt = n => '$ ' + Math.round(n).toLocaleString('es-AR');
 const pct = n => n.toFixed(2) + '%';
 const IVA_BANCO = 0.21;
 
+function calcPlan(p, neto, iva_v, iibb) {
+  const cb = p.costo / 100;
+  let precio, costo_bco, iva_bco, iva_venta, iibb_monto, neto_final;
+  if (p.tipo === 'efectivo') {
+    precio = neto; costo_bco = 0; iva_bco = 0; iva_venta = 0; iibb_monto = 0; neto_final = neto;
+  } else if (p.tipo === 'transferencia') {
+    const f = 1 - iva_v - iibb;
+    precio = f > 0 ? neto / f : 0;
+    costo_bco = 0; iva_bco = 0;
+    iva_venta = precio * iva_v;
+    iibb_monto = precio * iibb;
+    neto_final = precio - iva_venta - iibb_monto;
+  } else {
+    const f = 1 - cb*(1+IVA_BANCO) - iva_v - iibb;
+    precio = f > 0 ? neto / f : 0;
+    costo_bco = precio * cb;
+    iva_bco = costo_bco * IVA_BANCO;
+    iva_venta = precio * iva_v;
+    iibb_monto = precio * iibb;
+    neto_final = precio - costo_bco - iva_bco - iva_venta - iibb_monto;
+  }
+  return { precio, costo_bco, iva_bco, iva_venta, iibb_monto, neto_final };
+}
+
 function renderCards(containerId, iva_v, iibb) {
   const neto = parseFloat(document.getElementById(containerId === 'resultado_con' ? 'neto_con' : 'neto_sin').value) || 0;
   let html = '';
 
-  planes.forEach(p => {
-    const cb = p.costo / 100;
-    let precio, costo_bco, iva_bco, iva_venta, iibb_monto, neto_final;
+  planes.forEach((p, i) => {
+    const d = calcPlan(p, neto, iva_v, iibb);
+    const cuota_val = d.precio / p.cuotas;
+    const uid = containerId + '_' + i;
 
-    if (p.tipo === 'efectivo') {
-      precio = neto; costo_bco = 0; iva_bco = 0; iva_venta = 0; iibb_monto = 0; neto_final = neto;
-    } else if (p.tipo === 'transferencia') {
-      const factor = 1 - iva_v - iibb;
-      precio     = factor > 0 ? neto / factor : 0;
-      costo_bco  = 0; iva_bco = 0;
-      iva_venta  = precio * iva_v;
-      iibb_monto = precio * iibb;
-      neto_final = precio - iva_venta - iibb_monto;
-    } else {
-      const factor = 1 - cb*(1+IVA_BANCO) - iva_v - iibb;
-      precio     = factor > 0 ? neto / factor : 0;
-      costo_bco  = precio * cb;
-      iva_bco    = costo_bco * IVA_BANCO;
-      iva_venta  = precio * iva_v;
-      iibb_monto = precio * iibb;
-      neto_final = precio - costo_bco - iva_bco - iva_venta - iibb_monto;
+    let detalle = '';
+    if (d.costo_bco > 0) {
+      detalle += `<div class="row"><span class="lbl">Costo banco (${pct(p.costo)})</span><span class="red">- ${fmt(d.costo_bco)}</span></div>`;
+      detalle += `<div class="row"><span class="lbl">IVA 21% sobre costo banco</span><span class="red">- ${fmt(d.iva_bco)}</span></div>`;
     }
+    if (d.iva_venta > 0) detalle += `<div class="row"><span class="lbl">IVA efectivo ${(iva_v*100).toFixed(0)}%</span><span class="red">- ${fmt(d.iva_venta)}</span></div>`;
+    if (d.iibb_monto > 0) detalle += `<div class="row"><span class="lbl">IIBB ${(iibb*100).toFixed(1)}%</span><span class="red">- ${fmt(d.iibb_monto)}</span></div>`;
+    detalle += `<div class="row total"><span>Neto que te queda</span><span class="green">${fmt(d.neto_final)}</span></div>`;
 
-    const cuota_val = precio / p.cuotas;
+    const subtitulo = p.cuotas > 1
+      ? `${p.cuotas} × ${fmt(cuota_val)}${p.note ? ' · ' + p.note : ''}`
+      : p.note;
 
-    html += `<div class="card">
-      <div class="card-header" style="background:${p.color};">
-        <div>
-          <div style="font-size:14px;font-weight:500;color:${p.text};">${p.name}</div>
-          ${p.note ? `<div class="note" style="color:${p.text};">${p.note}</div>` : ''}
+    html += `<div class="acc" id="${uid}">
+      <div class="acc-header" style="background:${p.color};" onclick="toggle('${uid}')">
+        <div class="acc-left">
+          <span class="acc-name" style="color:${p.text};">${p.name}</span>
+          ${subtitulo ? `<span class="acc-note" style="color:${p.text};">${subtitulo}</span>` : ''}
         </div>
-        ${p.cuotas > 1 ? `<div style="font-size:12px;color:${p.text};opacity:0.85;">${p.cuotas} × ${fmt(cuota_val)}</div>` : ''}
-      </div>
-      <div class="card-body">
-        <div class="row" style="padding-top:8px;">
-          <span class="lbl">Precio a cobrar</span>
-          <span class="big">${fmt(precio)}</span>
-        </div>
-        ${costo_bco > 0 ? `
-        <div class="row">
-          <span class="lbl">Costo banco (${pct(p.costo)})</span>
-          <span class="red">- ${fmt(costo_bco)}</span>
-        </div>
-        <div class="row">
-          <span class="lbl">IVA 21% sobre costo banco</span>
-          <span class="red">- ${fmt(iva_bco)}</span>
-        </div>` : ''}
-        ${iva_venta > 0 ? `
-        <div class="row">
-          <span class="lbl">IVA efectivo ${(iva_v*100).toFixed(0)}% sobre venta</span>
-          <span class="red">- ${fmt(iva_venta)}</span>
-        </div>` : ''}
-        ${iibb_monto > 0 ? `
-        <div class="row">
-          <span class="lbl">IIBB ${(iibb*100).toFixed(1)}%</span>
-          <span class="red">- ${fmt(iibb_monto)}</span>
-        </div>` : ''}
-        <div class="row total">
-          <span>Neto que te queda</span>
-          <span class="green">${fmt(neto_final)}</span>
+        <div class="acc-right">
+          <span class="acc-precio" style="color:${p.text};">${fmt(d.precio)}</span>
+          <span class="acc-arrow" style="color:${p.text};">▼</span>
         </div>
       </div>
+      <div class="acc-body">${detalle}</div>
     </div>`;
   });
+
   document.getElementById(containerId).innerHTML = html;
+}
+
+function toggle(uid) {
+  const el = document.getElementById(uid);
+  el.classList.toggle('open');
 }
 
 function calcCon() {

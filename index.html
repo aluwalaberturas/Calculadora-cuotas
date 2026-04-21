@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Calculadora — Aluwal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f4f2; color: #1a1a1a; min-height: 100vh; padding: 1.2rem 1rem 3rem; }
+  .container { max-width: 520px; margin: 0 auto; }
+  h1 { font-size: 17px; font-weight: 600; margin-bottom: 1.2rem; }
+
+  .tabs-main { display: flex; gap: 6px; margin-bottom: 1.2rem; }
+  .tab-main { flex: 1; padding: 9px; text-align: center; font-size: 13px; font-weight: 500;
+    border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; color: #666; }
+  .tab-main.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+  .tabs-iva { display: flex; gap: 0; margin-bottom: 1.2rem; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+  .tab-iva { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500;
+    background: #fff; cursor: pointer; color: #666; border: none; }
+  .tab-iva:first-child { border-right: 1px solid #ddd; }
+  .tab-iva.active { background: #1a1a1a; color: #fff; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+  input[type=number] { width: 100%; padding: 9px 12px; font-size: 15px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #1a1a1a; outline: none; }
+  input[type=number]:focus { border-color: #555; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+
+  .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+  .card-header { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .card-body { padding: 4px 14px 10px; }
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+  .row:last-child { border-bottom: none; }
+  .row.total { font-weight: 600; font-size: 15px; padding-top: 8px; }
+  .lbl { color: #888; font-size: 12px; }
+  .big { font-size: 21px; font-weight: 700; }
+  .green { color: #3B6D11; }
+  .red { color: #A32D2D; }
+  .note { font-size: 11px; margin-top: 2px; opacity: 0.8; }
+
+  .plan-row { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+  .plan-row-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .plan-name-input { flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #1a1a1a; outline: none; }
+  .plan-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .plan-fields label { font-size: 11px; }
+  .plan-fields input { font-size: 13px; padding: 6px 10px; }
+  .note-input { width: 100%; margin-top: 8px; padding: 6px 10px; font-size: 12px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #666; outline: none; }
+  .btn-save { width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; margin-top: 6px; cursor: pointer; }
+  .btn-save:active { opacity: 0.8; }
+  .saved-msg { text-align: center; font-size: 13px; color: #3B6D11; margin-top: 8px; display: none; }
+  .info-banner { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #666; margin-bottom: 14px; }
+  .info-banner strong { color: #1a1a1a; }
+  footer { text-align: center; font-size: 11px; color: #aaa; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Calculadora Aluwal</h1>
+
+  <div class="tabs-main">
+    <div class="tab-main active" onclick="showMain('calcular', this)">Calcular</div>
+    <div class="tab-main" onclick="showMain('config', this)">Configurar %</div>
+  </div>
+
+  <div class="section active" id="tab-calcular">
+    <div class="tabs-iva">
+      <div class="tab-iva active" onclick="showIva('coniva', this)">Con IVA</div>
+      <div class="tab-iva" onclick="showIva('siniva', this)">Sin IVA</div>
+    </div>
+
+    <div class="section active" id="tab-coniva">
+      <div class="info-banner">Efectivo = neto puro. Transferencia = IVA + IIBB. Resto = IVA + IIBB + banco.</div>
+      <div class="grid3">
+        <div><label>Neto que querés ($)</label><input type="number" id="neto_con" value="19219" step="100" oninput="calcCon()"></div>
+        <div><label>IVA efectivo (%)</label><input type="number" id="iva_con" value="11" min="0" max="21" step="0.5" oninput="calcCon()"></div>
+        <div><label>IIBB (%)</label><input type="number" id="iibb_con" value="1.5" min="0" max="10" step="0.5" oninput="calcCon()"></div>
+      </div>
+      <div id="resultado_con"></div>
+    </div>
+
+    <div class="section" id="tab-siniva">
+      <div class="info-banner">Efectivo = neto puro. Transferencia = solo IIBB. Resto = IIBB + banco. Sin IVA.</div>
+      <div class="grid2">
+        <div><label>Neto que querés ($)</label><input type="number" id="neto_sin" value="19219" step="100" oninput="calcSin()"></div>
+        <div><label>IIBB (%)</label><input type="number" id="iibb_sin" value="1.5" min="0" max="10" step="0.5" oninput="calcSin()"></div>
+      </div>
+      <div id="resultado_sin"></div>
+    </div>
+  </div>
+
+  <div class="section" id="tab-config">
+    <div id="config-planes"></div>
+    <button class="btn-save" onclick="guardarConfig()">Guardar cambios</button>
+    <div class="saved-msg" id="saved-msg">✓ Guardado correctamente</div>
+  </div>
+
+  <footer>Aluwal Aberturas · Uso interno</footer>
+</div>
+
+<script>
+const DEFAULT_PLANES = [
+  { id:'ef',     name:'Efectivo',                      note:'Sin descuentos',           costo:0,     color:'#2D6A2D', text:'#f0fae8', cuotas:1,  tipo:'efectivo'      },
+  { id:'transf', name:'Transferencia bancaria',        note:'IVA + IIBB',               costo:0,     color:'#3B6D11', text:'#f0fae8', cuotas:1,  tipo:'transferencia' },
+  { id:'qr',     name:'QR Nave',                       note:'',                         costo:2.47,  color:'#C47A1E', text:'#FFF4E0', cuotas:1,  tipo:'banco'         },
+  { id:'deb',    name:'Débito Nave',                   note:'',                         costo:1.45,  color:'#534AB7', text:'#EEEDFE', cuotas:1,  tipo:'banco'         },
+  { id:'cred1',  name:'Crédito 1 pago — Nave',         note:'',                         costo:5.44,  color:'#7B3FA0', text:'#F5EAFF', cuotas:1,  tipo:'banco'         },
+  { id:'c3gal',  name:'3 cuotas s/i — Galicia',        note:'Miércoles y viernes',      costo:3.62,  color:'#0F6E56', text:'#E1F5EE', cuotas:3,  tipo:'banco'         },
+  { id:'c3',     name:'3 cuotas sin interés',          note:'Todos los días',           costo:7.23,  color:'#185FA5', text:'#e6f1fb', cuotas:3,  tipo:'banco'         },
+  { id:'c6',     name:'6 cuotas sin interés',          note:'Todos los días',           costo:13.57, color:'#E24B4A', text:'#fff0f0', cuotas:6,  tipo:'banco'         },
+  { id:'c12',    name:'12 cuotas sin interés',         note:'Todos los días',           costo:32.63, color:'#444441', text:'#f1efe8', cuotas:12, tipo:'banco'         },
+];
+
+function loadPlanes() {
+  try { const s = localStorage.getItem('aluwal_planes_v3'); return s ? JSON.parse(s) : DEFAULT_PLANES; }
+  catch(e) { return DEFAULT_PLANES; }
+}
+function savePlanes(p) {
+  try { localStorage.setItem('aluwal_planes_v3', JSON.stringify(p)); } catch(e) {}
+}
+
+let planes = loadPlanes();
+const fmt = n => '$ ' + Math.round(n).toLocaleString('es-AR');
+const pct = n => n.toFixed(2) + '%';
+const IVA_BANCO = 0.21;
+
+function renderCards(containerId, iva_v, iibb) {
+  const neto = parseFloat(document.getElementById(containerId === 'resultado_con' ? 'neto_con' : 'neto_sin').value) || 0;
+  let html = '';
+
+  planes.forEach(p => {
+    const cb = p.costo / 100;
+    let precio, costo_bco, iva_bco, iva_venta, iibb_monto, neto_final;
+
+    if (p.tipo === 'efectivo') {
+      precio = neto; costo_bco = 0; iva_bco = 0; iva_venta = 0; iibb_monto = 0; neto_final = neto;
+    } else if (p.tipo === 'transferencia') {
+      const factor = 1 - iva_v - iibb;
+      precio     = factor > 0 ? neto / factor : 0;
+      costo_bco  = 0; iva_bco = 0;
+      iva_venta  = precio * iva_v;
+      iibb_monto = precio * iibb;
+      neto_final = precio - iva_venta - iibb_monto;
+    } else {
+      const factor = 1 - cb*(1+IVA_BANCO) - iva_v - iibb;
+      precio     = factor > 0 ? neto / factor : 0;
+      costo_bco  = precio * cb;
+      iva_bco    = costo_bco * IVA_BANCO;
+      iva_venta  = precio * iva_v;
+      iibb_monto = precio * iibb;
+      neto_final = precio - costo_bco - iva_bco - iva_venta - iibb_monto;
+    }
+
+    const cuota_val = precio / p.cuotas;
+
+    html += `<div class="card">
+      <div class="card-header" style="background:${p.color};">
+        <div>
+          <div style="font-size:14px;font-weight:500;color:${p.text};">${p.name}</div>
+          ${p.note ? `<div class="note" style="color:${p.text};">${p.note}</div>` : ''}
+        </div>
+        ${p.cuotas > 1 ? `<div style="font-size:12px;color:${p.text};opacity:0.85;">${p.cuotas} × ${fmt(cuota_val)}</div>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="row" style="padding-top:8px;">
+          <span class="lbl">Precio a cobrar</span>
+          <span class="big">${fmt(precio)}</span>
+        </div>
+        ${costo_bco > 0 ? `
+        <div class="row">
+          <span class="lbl">Costo banco (${pct(p.costo)})</span>
+          <span class="red">- ${fmt(costo_bco)}</span>
+        </div>
+        <div class="row">
+          <span class="lbl">IVA 21% sobre costo banco</span>
+          <span class="red">- ${fmt(iva_bco)}</span>
+        </div>` : ''}
+        ${iva_venta > 0 ? `
+        <div class="row">
+          <span class="lbl">IVA efectivo ${(iva_v*100).toFixed(0)}% sobre venta</span>
+          <span class="red">- ${fmt(iva_venta)}</span>
+        </div>` : ''}
+        ${iibb_monto > 0 ? `
+        <div class="row">
+          <span class="lbl">IIBB ${(iibb*100).toFixed(1)}%</span>
+          <span class="red">- ${fmt(iibb_monto)}</span>
+        </div>` : ''}
+        <div class="row total">
+          <span>Neto que te queda</span>
+          <span class="green">${fmt(neto_final)}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function calcCon() {
+  const iva_v = (parseFloat(document.getElementById('iva_con').value)||0) / 100;
+  const iibb  = (parseFloat(document.getElementById('iibb_con').value)||0) / 100;
+  renderCards('resultado_con', iva_v, iibb);
+}
+
+function calcSin() {
+  const iibb = (parseFloat(document.getElementById('iibb_sin').value)||0) / 100;
+  renderCards('resultado_sin', 0, iibb);
+}
+
+function showMain(tab, el) {
+  document.querySelectorAll('.tab-main').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-calcular').classList.remove('active');
+  document.getElementById('tab-config').classList.remove('active');
+  if(tab === 'calcular') { document.getElementById('tab-calcular').classList.add('active'); calcCon(); }
+  else { document.getElementById('tab-config').classList.add('active'); renderConfig(); }
+}
+
+function showIva(tab, el) {
+  document.querySelectorAll('.tab-iva').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-coniva').classList.remove('active');
+  document.getElementById('tab-siniva').classList.remove('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if(tab === 'coniva') calcCon(); else calcSin();
+}
+
+function renderConfig() {
+  let html = '';
+  planes.forEach((p, i) => {
+    const esBanco = p.tipo === 'banco';
+    html += `<div class="plan-row">
+      <div class="plan-row-header">
+        <div class="color-dot" style="background:${p.color};"></div>
+        <input class="plan-name-input" type="text" id="cfg_name_${i}" value="${p.name}">
+      </div>
+      <div class="plan-fields">
+        <div>
+          <label>Costo banco (%)</label>
+          <input type="number" id="cfg_costo_${i}" value="${p.costo}" min="0" max="100" step="0.01"
+            ${!esBanco ? 'disabled style="background:#f0f0f0;color:#aaa;"' : ''}>
+        </div>
+        <div>
+          <label>Cuotas</label>
+          <input type="number" id="cfg_cuotas_${i}" value="${p.cuotas}" min="1" max="24" step="1">
+        </div>
+      </div>
+      <input class="note-input" type="text" id="cfg_note_${i}" placeholder="Nota (ej: Miércoles y viernes)" value="${p.note}">
+    </div>`;
+  });
+  document.getElementById('config-planes').innerHTML = html;
+}
+
+function guardarConfig() {
+  planes.forEach((p, i) => {
+    p.name   = document.getElementById(`cfg_name_${i}`).value;
+    if(p.tipo === 'banco') p.costo = parseFloat(document.getElementById(`cfg_costo_${i}`).value) || 0;
+    p.cuotas = parseInt(document.getElementById(`cfg_cuotas_${i}`).value) || 1;
+    p.note   = document.getElementById(`cfg_note_${i}`).value;
+  });
+  savePlanes(planes);
+  const msg = document.getElementById('saved-msg');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 2000);
+}
+
+calcCon();
+</script>
+</body>
+</html>
